@@ -54,6 +54,19 @@ describe("Promise", () => {
     // @ts-ignore
     promise.then(success);
   });
+  it("promise.then(success) v2 中的 success 会在 resolve 被调用的时候执行", done => {
+    const success = sinon.fake();
+    const promise = new Promise((resolve, reject) => {
+      assert.isFalse(success.called);
+      resolve();
+      setTimeout(() => {
+        assert.isTrue(success.called);
+        done();
+      });
+    });
+    // @ts-ignore
+    promise.then(undefined).then(success);
+  });
   it("promise.then(null, fail) 中的 fail 会在 reject 被调用的时候执行", done => {
     const fail = sinon.fake();
     const promise = new Promise((resolve, reject) => {
@@ -66,6 +79,19 @@ describe("Promise", () => {
     });
     // @ts-ignore
     promise.then(null, fail);
+  });
+  it("promise.then(null, fail) v2 中的 fail 会在 reject 被调用的时候执行", done => {
+    const fail = sinon.fake();
+    const promise = new Promise((resolve, reject) => {
+      assert.isFalse(fail.called);
+      reject();
+      setTimeout(() => {
+        assert.isTrue(fail.called);
+        done();
+      });
+    });
+    // @ts-ignore
+    promise.then(null, null).then(null, fail);
   });
   it("2.2.1 onFulfilled和onRejected都是可选的参数：", () => {
     const promise = new Promise(resolve => {
@@ -258,6 +284,22 @@ describe("Promise", () => {
       throw error;
     });
     promise2.then(null, fn);
+    setTimeout(() => {
+      assert(fn.called);
+      assert(fn.calledWith(error));
+      done();
+    });
+  });
+  it("2.2.7.2 如果success抛出一个异常e,promise2 第二个then回调中必须被拒绝", done => {
+    const promise1 = new Promise((resolve, reject) => {
+      resolve();
+    });
+    const fn = sinon.fake();
+    const error = new Error();
+    const promise2 = promise1.then(() => {
+      throw error;
+    });
+    promise2.then(null, undefined).then(null, fn);
     setTimeout(() => {
       assert(fn.called);
       assert(fn.calledWith(error));
